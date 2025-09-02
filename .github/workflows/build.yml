@@ -1,0 +1,43 @@
+name: Build Linux Kernel
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libncurses5-dev bison flex libssl-dev libelf-dev wget ccache
+
+      - name: Download Linux kernel
+        run: |
+          wget https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.1.16.tar.xz
+          tar -xf linux-4.1.16.tar.xz
+          mv linux-4.1.16 kernel
+
+      - name: Configure kernel
+        run: |
+          cd kernel
+          make mrproper
+          make defconfig
+          make KCFLAGS="-g"
+
+      - name: Build vmlinux and bzImage
+        run: |
+          cd kernel
+          make -j$(nproc) vmlinux bzImage
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: linux-kernel
+          path: |
+            kernel/vmlinux
+            kernel/arch/x86/boot/bzImage
