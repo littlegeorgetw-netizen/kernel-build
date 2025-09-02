@@ -27,7 +27,7 @@ jobs:
           cd kernel
           make mrproper
           make defconfig
-          make KCFLAGS="-g"
+          make KCFLAGS=""-g -fno-pic""
 
       - name: Build vmlinux and bzImage
         run: |
