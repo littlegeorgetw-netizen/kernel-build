@@ -6,35 +6,31 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    container:
+      image: conanio/gcc5
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-5 g++-5 build-essential libncurses5-dev bison flex libssl-dev libelf-dev wget ccache
-
-      - name: Download Linux kernel
+      - name: download
         run: |
           wget https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.1.16.tar.xz
           tar -xf linux-4.1.16.tar.xz
           mv linux-4.1.16 kernel
 
-      - name: Configure kernel
+      - name: configure
         run: |
           cd kernel
           make mrproper
           make defconfig
-          make CC=gcc-5 KCFLAGS="-g -fno-pic" -j$(nproc) vmlinux bzImage
+          make menuconfig  # 可选，进行内核配置
 
-      - name: Build vmlinux and bzImage
+      - name: compile
         run: |
           cd kernel
-          make -j$(nproc) vmlinux bzImage
+          unset CFLAGS CXXFLAGS LDFLAGS
+          make KCFLAGS="-g -fno-pic" -j$(nproc) vmlinux bzImage
 
-      - name: Upload artifacts
+      - name: upload
         uses: actions/upload-artifact@v4
         with:
           name: linux-kernel
